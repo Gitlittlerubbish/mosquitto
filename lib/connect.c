@@ -196,6 +196,7 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking)
         net__socket_close(mosq);
     }
 
+/* 负责tcp层的socket连接，并非mqtt的connect */
 #ifdef WITH_SOCKS
 	if(mosq->socks5_host){
 		rc = net__socket_connect(mosq, mosq->socks5_host, mosq->socks5_port, mosq->bind_address, blocking);
@@ -204,11 +205,13 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking)
 	{
 		rc = net__socket_connect(mosq, mosq->host, mosq->port, mosq->bind_address, blocking);
 	}
-	if(rc>0){
+	if(rc>0){	// non-blocking版本，会返回connect_pending
 		mosquitto__set_state(mosq, mosq_cs_connect_pending);
 		return rc;
 	}
+/* socket连接成功 */
 
+/* 开始mqtt层面的connect */
 #ifdef WITH_SOCKS
 	if(mosq->socks5_host){
 		mosquitto__set_state(mosq, mosq_cs_socks5_new);

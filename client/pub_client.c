@@ -124,6 +124,15 @@ int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadl
 }
 
 
+/**
+ * @brief connect的callback，如果成功connect的话就publish在cfg里的消息
+ * 
+ * @param mosq 
+ * @param obj 
+ * @param result 
+ * @param flags 
+ * @param properties 
+ */
 void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flags, const mosquitto_property *properties)
 {
 	int rc = MOSQ_ERR_SUCCESS;
@@ -133,7 +142,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 	UNUSED(properties);
 
 	connack_result = result;
-
+	printf("connect callback thread id: %d\n", pthread_self());
 	if(!result){
 		first_publish = true;
 		switch(cfg.pub_mode){
@@ -221,7 +230,11 @@ void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_
 	}
 }
 
-
+/**
+ * @brief 对全局变量line_buf进行初始化
+ * 
+ * @return int 
+ */
 int pub_shared_init(void)
 {
 	line_buf = malloc((size_t )line_buf_len);
@@ -516,7 +529,7 @@ int main(int argc, char *argv[])
 {
 	struct mosquitto *mosq = NULL;
 	int rc;
-
+	printf("main thread id: %d\n", pthread_self());
 	mosquitto_lib_init();
 
 	if(pub_shared_init()) return 1;
@@ -541,6 +554,7 @@ int main(int argc, char *argv[])
 	}
 #endif
 
+	/* 检查想要发送的消息是不是从文件之类的读取，不用管，统一从命令行指定发送 */
 	if(cfg.pub_mode == MSGMODE_STDIN_FILE){
 		if(load_stdin()){
 			err_printf(&cfg, "Error loading input from stdin.\n");
@@ -558,12 +572,13 @@ int main(int argc, char *argv[])
 		print_usage();
 		goto cleanup;
 	}
-
+	/********/
 
 	if(client_id_generate(&cfg)){
 		goto cleanup;
 	}
 
+	/* cfg.clean_session(True):set to true to instruct the broker to clean all messages and subscriptions on disconnect */
 	mosq = mosquitto_new(cfg.id, cfg.clean_session, NULL);
 	if(!mosq){
 		switch(errno){
@@ -576,6 +591,7 @@ int main(int argc, char *argv[])
 		}
 		goto cleanup;
 	}
+	/* 如果指定了debug为true的话就设置log的callback */
 	if(cfg.debug){
 		mosquitto_log_callback_set(mosq, my_log_callback);
 	}

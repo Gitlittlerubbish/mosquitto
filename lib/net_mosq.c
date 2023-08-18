@@ -128,6 +128,11 @@ UI_METHOD *net__get_ui_method(void)
 
 #endif
 
+/**
+ * @brief useless for pure Linux, just return OK
+ * 
+ * @return int 
+ */
 int net__init(void)
 {
 #ifdef WIN32
@@ -386,7 +391,16 @@ int net__try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *s
 
 #endif
 
-
+/**
+ * @brief 连接tcp到目标host，并最终设置socket为non-blocking（无论传参是不是blocking）
+ * 
+ * @param host 
+ * @param port 
+ * @param sock 
+ * @param bind_address 
+ * @param blocking 
+ * @return int 
+ */
 static int net__try_connect_tcp(const char *host, uint16_t port, mosq_sock_t *sock, const char *bind_address, bool blocking)
 {
 	struct addrinfo hints;
@@ -907,6 +921,7 @@ int net__socket_connect_step3(struct mosquitto *mosq, const char *host)
 }
 
 /* Create a socket and connect it to 'ip' on port 'port'.  */
+/* 如果有tls的话，则连接好了tls */
 int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking)
 {
 	int rc, rc2;
@@ -997,6 +1012,14 @@ ssize_t net__read(struct mosquitto *mosq, void *buf, size_t count)
 #endif
 }
 
+/**
+ * @brief 最终的send，从mosq->sock发送buf里count数量的字节。如果带TLS的话先处理TLS再send
+ * 
+ * @param mosq struct mosquitto *
+ * @param buf const void *
+ * @param count size_t
+ * @return ssize_t 
+ */
 ssize_t net__write(struct mosquitto *mosq, const void *buf, size_t count)
 {
 #ifdef WITH_TLS

@@ -182,7 +182,12 @@ static int check_format(const char *str)
 	return 0;
 }
 
-
+/**
+ * @brief 当前程序配置的初始化，RR配置为V5，其余为V311。其他变量可以不管，比如keepalive的设置等。
+ * 
+ * @param cfg 
+ * @param pub_or_sub 
+ */
 static void init_config(struct mosq_config *cfg, int pub_or_sub)
 {
 	memset(cfg, 0, sizeof(*cfg));
@@ -267,6 +272,15 @@ void client_config_cleanup(struct mosq_config *cfg)
 	mosquitto_property_free_all(&cfg->will_props);
 }
 
+/**
+ * @brief 初始化当前client的配置，包括MQTT版本和MQTT属性。
+ * 
+ * @param cfg 
+ * @param pub_or_sub 
+ * @param argc 
+ * @param argv 
+ * @return int 
+ */
 int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[])
 {
 	int rc;
@@ -290,6 +304,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 #ifndef WIN32
 	env = getenv("XDG_CONFIG_HOME");
 	if(env){
+		printf("XDG_CONFIG_HOME yes\n");
 		len = strlen(env) + strlen("/mosquitto_pub") + 1;
 		loc = malloc(len);
 		if(!loc){
@@ -307,6 +322,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	}else{
 		env = getenv("HOME");
 		if(env){
+			printf("HOME yes: %s\n", env);
 			len = strlen(env) + strlen("/.config/mosquitto_pub") + 1;
 			loc = malloc(len);
 			if(!loc){
@@ -321,6 +337,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 				snprintf(loc, len, "%s/.config/mosquitto_rr", env);
 			}
 			loc[len-1] = '\0';
+			printf("loc: %s\n", loc);
 		}
 	}
 
@@ -344,6 +361,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	}
 #endif
 
+	// 如果有配置文件的话，读取配置文件中的配置信息并保存到全局变量cfg
 	if(loc){
 		fptr = fopen(loc, "rt");
 		if(fptr){
@@ -380,6 +398,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	rc = client_config_line_proc(cfg, pub_or_sub, argc, argv);
 	if(rc) return rc;
 
+	/* will_paylaod will_topic这两个配置的参数主要是什么作用*/
 	if(cfg->will_payload && !cfg->will_topic){
 		fprintf(stderr, "Error: Will payload given, but no will topic given.\n");
 		return 1;
@@ -413,6 +432,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	}
 #endif
 
+	/* 检查配置的MQTT的版本*/
 	if(cfg->protocol_version == 5){
 		if(cfg->clean_session == false && cfg->session_expiry_interval == -1){
 			/* User hasn't set session-expiry-interval, but has cleared clean
@@ -451,6 +471,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		}
 	}
 
+	/* 检查各种message的property是否valid */
 	rc = mosquitto_property_check_all(CMD_CONNECT, cfg->connect_props);
 	if(rc){
 		err_printf(cfg, "Error in CONNECT properties: %s\n", mosquitto_strerror(rc));
@@ -1333,6 +1354,12 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 	return MOSQ_ERR_SUCCESS;
 }
 
+/**
+ * @brief 生成一个client id（如果指定了id_prefix的话，否则直接返回OK
+ * 
+ * @param cfg 
+ * @return int 
+ */
 int client_id_generate(struct mosq_config *cfg)
 {
 	if(cfg->id_prefix){

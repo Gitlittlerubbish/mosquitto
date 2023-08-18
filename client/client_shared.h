@@ -47,6 +47,10 @@ Contributors:
 #define PORT_UNDEFINED -1
 #define PORT_UNIX 0
 
+/**
+ * @brief client所使用的配置结构体
+ * 
+ */
 struct mosq_config {
 	char *id;
 	char *id_prefix;
@@ -68,7 +72,7 @@ struct mosq_config {
 	bool use_srv;
 #endif
 	bool debug;
-	bool quiet;
+	bool quiet; /* log or not*/
 	unsigned int max_inflight;
 	char *username;
 	char *password;

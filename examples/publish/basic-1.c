@@ -7,11 +7,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+#include <pthread.h>
 
 /* Callback called when the client receives a CONNACK message from the broker. */
 void on_connect(struct mosquitto *mosq, void *obj, int reason_code)
 {
+	printf("on connect thread id: %d\n", pthread_self());
 	/* Print out the connection result. mosquitto_connack_string() produces an
 	 * appropriate string for MQTT v3.x clients, the equivalent for MQTT v5.0
 	 * clients is mosquitto_reason_string().
@@ -82,7 +83,7 @@ int main(int argc, char *argv[])
 
 	/* Required before calling other mosquitto functions */
 	mosquitto_lib_init();
-
+	printf("current thread id: %d\n", pthread_self());
 	/* Create a new client instance.
 	 * id = NULL -> ask the broker to generate a client id for us
 	 * clean session = true -> the broker should remove old sessions when we connect

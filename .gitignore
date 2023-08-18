@@ -103,3 +103,5 @@ obj-*/
 
 # Others
 tmp/
+.vscode/
+a.out

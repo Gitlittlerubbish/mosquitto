@@ -138,7 +138,13 @@ void packet__cleanup_all(struct mosquitto *mosq)
 	pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 }
 
-
+/**
+ * @brief 把一个packet放到mosq的发送队列中，然后调用packet_write()发送队列中的所有packet
+ * 
+ * @param mosq 
+ * @param packet 
+ * @return int 
+ */
 int packet__queue(struct mosquitto *mosq, struct mosquitto__packet *packet)
 {
 #ifndef WITH_BROKER
@@ -207,7 +213,12 @@ int packet__check_oversize(struct mosquitto *mosq, uint32_t remaining_length)
 	}
 }
 
-
+/**
+ * @brief 发送out_packet队列中的所有packet（每个都是完整的MQTT的packet，从MQTT header开始）
+ * 
+ * @param mosq struct mosquitto *
+ * @return int 
+ */
 int packet__write(struct mosquitto *mosq)
 {
 	ssize_t write_length;

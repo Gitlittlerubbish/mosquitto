@@ -34,6 +34,15 @@ Contributors:
 #include "property_mosq.h"
 #include "send_mosq.h"
 
+/**
+ * @brief 发送MQTT协议的connect
+ * 
+ * @param mosq 
+ * @param keepalive 
+ * @param clean_session 
+ * @param properties 
+ * @return int 
+ */
 int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session, const mosquitto_property *properties)
 {
 	struct mosquitto__packet *packet = NULL;
